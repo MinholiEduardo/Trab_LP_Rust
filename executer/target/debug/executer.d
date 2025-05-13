@@ -1,0 +1,1 @@
+C:\Users\55449\Dropbox\Notebook\ ACER\Ciência\ da\ Computação\ -\ 3º\ ano\LP\Trab_LP_Rust\executer\target\debug\executer.exe: C:\Users\55449\Dropbox\Notebook\ ACER\Ciência\ da\ Computação\ -\ 3º\ ano\LP\Trab_LP_Rust\executer\src\main.rs
