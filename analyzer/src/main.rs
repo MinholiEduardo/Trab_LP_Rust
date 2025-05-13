@@ -65,7 +65,6 @@ fn analyzer(p: &str,
 fn main() {
     let program: &str = "
     var a
-    a = 3
     func f() {
         a = 5
         var b
