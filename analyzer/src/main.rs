@@ -1,3 +1,9 @@
+// Eduardo Angelo Rozada Minholi - ra134932
+// Nuno Miguel Mendonça Abilio - ra132830
+//
+// Instructions:
+// bla bla bla
+
 use std::collections::HashMap;
 
 fn analyzer(p: &str, 
