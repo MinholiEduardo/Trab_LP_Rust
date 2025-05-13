@@ -19,9 +19,9 @@ g()
     // Tabelas para armazenar informações do analisador
 
     // Mapeia nome de função para número da linha onde está definida
-    let mut function_table: HashMap<String, i32> = HashMap::new();
+    let mut function_table: HashMap<String, usize> = HashMap::new();
     // Mapeia variáveis globais para endereços de memória
-    let mut global_symbol_table: HashMap<String, i32> = HashMap::new();
+    let mut global_symbol_table: HashMap<String, usize> = HashMap::new();
     // Lista com nomes de variáveis locais
     let mut local_symbol_table: Vec<String> = Vec::new();
 
@@ -35,11 +35,11 @@ g()
     // Inicializa as estruturas de execução
 
     // Pilha de frames de ativação (um por chamada de função)
-    let mut activation_frames: Vec<HashMap<String, i32>> = Vec::new();
+    let mut activation_frames: Vec<HashMap<String, usize>> = Vec::new();
     // Pilha de posições para retornar após chamadas de função
-    let mut call_stack: Vec<i32> = Vec::new();
+    let mut call_stack: Vec<usize> = Vec::new();
     // Memória alocada para variáveis globais
-    let mut memory: Vec<i32> = Vec::new();
+    let mut memory: Vec<usize> = Vec::new();
     for _i in 0..global_symbol_table.len(){
         memory.push(0);
     }
@@ -69,13 +69,76 @@ g()
 /// podem ser mudadas normalmente sem causar problemas envolvendo acesso à threads.
 fn execute(
     program: &str,
-    function_table: &mut HashMap<String, i32>,
-    global_symbol_table: &mut HashMap<String, i32>,
-    activation_frames: &mut Vec<HashMap<String, i32>>,
-    call_stack: &mut Vec<i32>,
-    memory: &mut Vec<i32>,
+    function_table: &mut HashMap<String, usize>,
+    global_symbol_table: &mut HashMap<String, usize>,
+    activation_frames: &mut Vec<HashMap<String, usize>>,
+    call_stack: &mut Vec<usize>,
+    memory: &mut Vec<usize>,
 ) {
     // Aqui vai a lógica da função
-    let pc: i32 = 0;
-    println!("Executando o program...");
+    let mut pc: usize = 0; // Program counter: aponta para a linha atual do programa
+    let lines: Vec<&str> = program.trim().split('\n').collect(); // Divide o programa em linhas
+    let _len_lines: usize = lines.len();
+    
+    while pc < _len_lines {
+        let parts: Vec<&str> = lines[pc].split_whitespace().collect();
+        match parts[..]{
+            // Criação de variável local
+            ["var", name] => {
+                if !global_symbol_table.contains_key(name) { // Não cria variáveis globais aqui
+                    memory.push(0); // Aloca espaço na memória
+                    let adress: usize = memory.len() -1;  // Endereço da nova variável
+                    let last_index = activation_frames.len() - 1; // Índice do frame de ativação atual
+                    activation_frames[last_index].insert(name.to_string(), adress); // # Adiciona ao frame
+                    println!("created local {} with adress {}", name, adress);
+                }
+            }
+            // Atribuição de valor
+            [name, "=", number] => {
+                if global_symbol_table.contains_key(name) { // Se for variável global
+                    match global_symbol_table.get(name) { // Burocracia funcional para garantir que está no dicinário
+                        Some(v) => { 
+                            let adress: usize = *v;
+                            match number.parse::<usize>() {
+                                Ok(number_usize) => { // Burocracia funcial para garantir a conversão é possível
+                                    memory[adress] = number_usize; // Escreve na memória
+                                    println!("{} at adress {} receives {}", name, adress, number)
+                                }
+                                Err(e) => println!("Erro ao converter: {} para usize!", e),
+                            }
+                        }
+                        None => println!("Erro de chave não encontrada!"),
+                    }
+                    
+                } else { // Se for Variável local
+                    let last_index = activation_frames.len() - 1; // Índice do frame de ativação atual
+                    match activation_frames[last_index].get(name) { // Burocracia funcional para garantir que está no dicinário
+                        Some(v) => { 
+                            let adress: usize = *v; // Busca no frame atual
+                            match number.parse::<usize>() {
+                                Ok(number_usize) => { // Burocracia funcial para garantir a conversão é possível
+                                    memory[adress] = number_usize; // Escreve na memória
+                                    println!("{} at adress {} receives {}", name, adress, number)
+                                }
+                                Err(e) => println!("Erro ao converter: {} para usize!", e),
+                            }
+                        }
+                        None => println!("Erro de chave não encontrada!"),
+                    }
+
+                }
+            }
+            ["func", _name, "{"] => {
+                while lines[pc] != "}"{  // pula as linhas da função
+                    pc = pc + 1;
+                }
+            }
+            _ => {
+            }
+        }
+        
+
+
+
+    }
 }
