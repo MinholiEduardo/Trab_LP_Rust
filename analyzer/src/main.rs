@@ -27,7 +27,7 @@ fn analyzer(p: &str,
                     }
                 }
             }
-            [name, "=", number] => {
+            [name, "=", _number] => {
                 if !global_symbol_table.contains_key(name) && !local_symbol_table.contains(&name.to_string()) {
                     println!("variable unknown: {}", name);
                 }
@@ -42,29 +42,41 @@ fn analyzer(p: &str,
                 }
             }
             ["}"] => {
-                in_function = false
-                for var in local_symbol_table
+                in_function = false;
+                for var in local_symbol_table.iter() {
+                    println!("clearing local_symbol_table: {}", var);
+                }
+                local_symbol_table.clear();
+            }
+            [name] if name.ends_with("()") => {
+                if !function_table.contains_key(name) {
+                    println!("function unknown: {}", name)
+                }
             }
             _ => {
                 println!("Unmatched line: {}", line)
             }
         }
     }
+    println!("analysis ended\n")
 }
 
 
 fn main() {
     let program: &str = "
     var a
-    var a
+    a = 3
     func f() {
-        var a
+        a = 5
         var b
+        b = 6
     }
     func g() {
-        var b
-        c = 0
+        var c
+        c = 7
+        f()
     }
+    g()
     ";
 
     let mut function_table: HashMap<String, usize> = HashMap::new();
@@ -72,4 +84,8 @@ fn main() {
     let mut local_symbol_table: Vec<String> = Vec::new();
 
     analyzer(program, &mut function_table, &mut global_symbol_table, &mut local_symbol_table);
+
+    println!("global_symbol_table: {:?}", global_symbol_table);
+    println!("local_symbol_table: {:?}", local_symbol_table);
+    println!("function_table: {:?}", function_table);
 }
