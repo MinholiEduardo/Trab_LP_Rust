@@ -2,19 +2,19 @@ use std::collections::HashMap;
 fn main() {
     // Código-fonte do programa que será analisado e executado
     let program: &str = "
-var a
-func f() {
-    a = 5
-    var b
-    b = 6
-}
-func g() {
-    var c
-    c = 7
-    f()
-}
-g()
-";
+    var a
+    func f() {
+        a = 5
+        var b
+        b = 6
+    }
+    func g() {
+        var c
+        c = 7
+        f()
+    }
+    g()
+    ";
 
     // Tabelas para armazenar informações do analisador
 
@@ -35,7 +35,7 @@ g()
     //  Exibe o conteúdo das tabelas após a análise
     println!("global_symbol_table: {:?}", global_symbol_table);
     println!("local_symbol_table: {:?}", local_symbol_table);
-    println!("function_table: {:?}", function_table);
+    println!("function_table: {:?}\n", function_table);
 
     // Inicializa as estruturas de execução
 
@@ -94,7 +94,6 @@ fn analyzer(p: &str,
                 else {
                     if in_function { // Variável local
                         local_symbol_table.push(name.to_string());
-                        memory_address += 1;
                     }
                     else { // Variável global
                         global_symbol_table.insert(name.to_string(), memory_address);
@@ -201,7 +200,7 @@ fn execute(
                 }
             }
             ["func", _name, "{"] => {
-                while lines[pc] != "}"{  // Pula as linhas da função
+                while lines[pc].trim() != "}"{  // Pula as linhas da função
                     pc += 1;
                 }
             }
