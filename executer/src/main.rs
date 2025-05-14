@@ -45,14 +45,14 @@ g()
     }
 
     // Executa o programa analisado
-    // execute(
-    //     program,
-    //     &mut function_table,
-    //     &mut global_symbol_table,
-    //     &mut activation_frames,
-    //     &mut call_stack,
-    //     &mut memory,
-    // )
+    execute(
+        program,
+        &mut function_table,
+        &mut global_symbol_table,
+        &mut activation_frames,
+        &mut call_stack,
+        &mut memory,
+    );
 
     // Imprime o estado final das estruturas
     println!("memory: {:?}", memory);
@@ -109,7 +109,6 @@ fn execute(
                         }
                         None => println!("Erro de chave não encontrada!"),
                     }
-                    
                 } else { // Se for Variável local
                     let last_index = activation_frames.len() - 1; // Índice do frame de ativação atual
                     match activation_frames[last_index].get(name) { // Burocracia funcional para garantir que está no dicinário
@@ -125,20 +124,51 @@ fn execute(
                         }
                         None => println!("Erro de chave não encontrada!"),
                     }
-
                 }
             }
             ["func", _name, "{"] => {
-                while lines[pc] != "}"{  // pula as linhas da função
-                    pc = pc + 1;
+                while lines[pc] != "}"{  // Pula as linhas da função
+                    pc += 1;
+                }
+            }
+            // Fim de função (retorno da chamada)
+            ["}"] => {
+                println!("memory before removal of local variables: {:?}", memory);
+                let last_index = activation_frames.len() - 1; // Índice do frame de ativação atual
+                println!("deleting last activation frame: {:?}", activation_frames[last_index]);
+                match activation_frames.pop() { // Remove o frame atual (desempilha)
+                    Some(last_frame) => {
+                        for _i in 0..last_frame.len() {
+                            memory.pop(); // Libera a memória usada pelas variáveis locais
+                        }
+                    }
+                    None => println!("activation_frames vazio, não há como desempilhar"),
+                }
+                match call_stack.pop() {
+                    Some(return_line) => {
+                        pc = return_line;  // Volta para a linha após a chamada de função
+                    }
+                    None => println!("call_stack vazio, não é possível desempilhar.")
+                }
+                println!("return to line {}", pc)
+            }
+            // Chamada de função
+            [name] if name.ends_with("()") => {
+                call_stack.push(pc); // Empilha a posição de retorno
+                println!("{} called in line {}", name, pc);
+                activation_frames.push(HashMap::new());  // Cria novo frame de ativação
+                match function_table.get(name) { // Burocracia funcional para garantir que está no dicinário
+                    Some(called_line) => {
+                        pc = *called_line; // Vai para a linha da função chamada
+                    }
+                    None => println!("Erro de chave não encontrada!")
                 }
             }
             _ => {
+                println!("Expressão Inválida!")
             }
         }
-        
-
-
-
+        pc += 1; // Avança para a próxima linha
     }
+    println!("Program ended\n");
 }
