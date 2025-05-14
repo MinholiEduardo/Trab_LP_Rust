@@ -1,4 +1,20 @@
 use std::collections::HashMap;
+
+// Eduardo Angelo Rozada Minholi - ra134932
+// Nuno Miguel Mendonça Abilio - ra132830
+
+// Instructions to compile and run the code:
+// 1. To avoid dealing with files and terminals, we recommend using 
+// an Online compiler (e.g: Programiz https://www.programiz.com/rust/online-compiler/)
+// rather than going trough the classic process of running a program in Rust.
+//
+// 2. Copy and paste the code in the editor area
+// 3. Ensure the selected language is Rust 
+// 4. Click "Run"
+//
+// Obs: If you want to change the test case, simply edit the string located at "program" (lines 17-30)
+
+
 fn main() {
     // Código-fonte do programa que será analisado e executado
     let program: &str = "
