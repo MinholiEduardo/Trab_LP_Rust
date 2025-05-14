@@ -6,7 +6,7 @@ use std::collections::HashMap;
 // Instructions to compile and run the code:
 // 1. To avoid dealing with files and terminals, we recommend using 
 // an Online compiler (e.g: Programiz https://www.programiz.com/rust/online-compiler/)
-// rather than going trough the classic process of running a program in Rust.
+// rather than going trough the classic process of creating and running a program in Rust.
 //
 // 2. Copy and paste the code in the editor area
 // 3. Ensure the selected language is Rust 
