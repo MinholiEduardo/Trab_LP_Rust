@@ -25,7 +25,12 @@ g()
     // Lista com nomes de variáveis locais
     let mut local_symbol_table: Vec<String> = Vec::new();
 
-    // Executa a análise sintática e semântica
+    analyzer(
+        program,
+        &mut function_table, 
+        &mut global_symbol_table, 
+        &mut local_symbol_table,
+    );
 
     //  Exibe o conteúdo das tabelas após a análise
     println!("global_symbol_table: {:?}", global_symbol_table);
@@ -61,12 +66,81 @@ g()
 
 }
 
+// A pricípio, o Rust não tem variáveis globais mutáveis acessíveis de forma simples como em outras
+// linguagens — pelo menos, não sem usar construções especiais que envolvem static, Mutex, Arc —
+// pois ele exige que você garanta a segurança ao lidar com threads e dados compartilhados. Nesse
+// sentido, o jeito é passar todas as variáveis inicializadas como parâmetros, de forma que elas
+// podem ser mudadas normalmente sem causar problemas envolvendo acesso à threads.
+
+/// Função que analisa o código para verificar declarações e definições
+fn analyzer(p: &str, 
+    function_table: &mut HashMap<String, usize>, 
+    global_symbol_table: &mut HashMap<String, usize>, 
+    local_symbol_table: &mut Vec<String>) {
+
+    let mut memory_address = 0; // Contador de endereços na memória (como um ponteiro de alocação)
+    let mut in_function = false; // Flag que indica se está dentro de uma função
+
+    // Percorre o programa linha a linha, com número da linha
+    for (line_number, line) in p.trim().lines().enumerate() { 
+        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+
+        match parts[..] { // Divide a linha em partes e faz pattern matching
+            // Declaração de variável
+            ["var", name] => {
+                if global_symbol_table.contains_key(name) || local_symbol_table.contains(&name.to_string()) {
+                    println!("variable redefined: {}", name)  // Erro: variável já declarada
+                }
+                else {
+                    if in_function { // Variável local
+                        local_symbol_table.push(name.to_string());
+                        memory_address += 1;
+                    }
+                    else { // Variável global
+                        global_symbol_table.insert(name.to_string(), memory_address);
+                        memory_address += 1;
+                    }
+                }
+            }
+            // Atribuição de valor
+            [name, "=", _number] => {
+                if !global_symbol_table.contains_key(name) && !local_symbol_table.contains(&name.to_string()) {
+                    println!("variable unknown: {}", name); // Erro: variável não declarada
+                }
+            }
+            // Início de definição de função
+            ["func", name, "{"] => {
+                if function_table.contains_key(name) { // Erro: função já declarada
+                    println!("function redefined: {}", name);
+                }
+                else {
+                    function_table.insert(name.to_string(), line_number); // Registra a linha onde a função começa
+                    in_function = true; // Entra no escopo da função
+                }
+            }
+            // Fim de função
+            ["}"] => { 
+                in_function = false; // Sai do escopo da função
+                for var in local_symbol_table.iter() { // Limpa variáveis locais
+                    println!("clearing local_symbol_table: {}", var);
+                }
+                local_symbol_table.clear();
+            }
+            // Chamada de função
+            [name] if name.ends_with("()") => {
+                if !function_table.contains_key(name) {
+                    println!("function unknown: {}", name) // Erro: função não declarada
+                }
+            }
+            _ => { // Linha que não se encaixa em nenhuma regra
+                println!("Unmatched line: {}", line)
+            }
+        }
+    }
+    println!("analysis ended\n")
+}
+
 /// Função que executa o código, após a análise.
-/// A pricípio, o Rust não tem variáveis globais mutáveis acessíveis de forma simples como em outras
-/// linguagens — pelo menos, não sem usar construções especiais que envolvem static, Mutex, Arc —
-/// pois ele exige que você garanta a segurança ao lidar com threads e dados compartilhados. Nesse
-/// sentido, o jeito é passar todas as variáveis inicializadas como parâmetros, de forma que elas
-/// podem ser mudadas normalmente sem causar problemas envolvendo acesso à threads.
 fn execute(
     program: &str,
     function_table: &mut HashMap<String, usize>,

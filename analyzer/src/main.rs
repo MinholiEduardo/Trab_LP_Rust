@@ -1,3 +1,96 @@
+// Eduardo Angelo Rozada Minholi - ra134932
+// Nuno Miguel Mendonça Abilio - ra132830
+//
+// Instructions:
+// bla bla bla
+
+use std::collections::HashMap;
+
+fn analyzer(p: &str, 
+    function_table: &mut HashMap<String, usize>, 
+    global_symbol_table: &mut HashMap<String, usize>, 
+    local_symbol_table: &mut Vec<String>) {
+
+    let mut memory_address = 0;
+    let mut in_function = false;
+
+    for (line_number, line) in p.trim().lines().enumerate() {
+        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+
+        match parts[..] {
+            ["var", name] => {
+                if global_symbol_table.contains_key(name) || local_symbol_table.contains(&name.to_string()) {
+                    println!("variable redefined: {}", name)
+                }
+                else {
+                    if in_function {
+                        local_symbol_table.push(name.to_string());
+                        memory_address += 1;
+                    }
+                    else {
+                        global_symbol_table.insert(name.to_string(), memory_address);
+                        memory_address += 1;
+                    }
+                }
+            }
+            [name, "=", _number] => {
+                if !global_symbol_table.contains_key(name) && !local_symbol_table.contains(&name.to_string()) {
+                    println!("variable unknown: {}", name);
+                }
+            }
+            ["func", name, "{"] => {
+                if function_table.contains_key(name) {
+                    println!("function redefined: {}", name);
+                }
+                else {
+                    function_table.insert(name.to_string(), line_number);
+                    in_function = true;
+                }
+            }
+            ["}"] => {
+                in_function = false;
+                for var in local_symbol_table.iter() {
+                    println!("clearing local_symbol_table: {}", var);
+                }
+                local_symbol_table.clear();
+            }
+            [name] if name.ends_with("()") => {
+                if !function_table.contains_key(name) {
+                    println!("function unknown: {}", name)
+                }
+            }
+            _ => {
+                println!("Unmatched line: {}", line)
+            }
+        }
+    }
+    println!("analysis ended\n")
+}
+
+
 fn main() {
-    println!("Hello, world!");
+    let program: &str = "
+    var a
+    func f() {
+        a = 5
+        var b
+        b = 6
+    }
+    func g() {
+        var c
+        c = 7
+        f()
+    }
+    g()
+    ";
+
+    let mut function_table: HashMap<String, usize> = HashMap::new();
+    let mut global_symbol_table: HashMap<String, usize> = HashMap::new();
+    let mut local_symbol_table: Vec<String> = Vec::new();
+
+    analyzer(program, &mut function_table, &mut global_symbol_table, &mut local_symbol_table);
+
+    println!("global_symbol_table: {:?}", global_symbol_table);
+    println!("local_symbol_table: {:?}", local_symbol_table);
+    println!("function_table: {:?}", function_table);
 }
